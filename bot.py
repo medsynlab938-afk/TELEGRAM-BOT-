@@ -184,7 +184,7 @@ def main_keyboard():
         ["📜 Orders History", "💬 Live Support"],
         ["🌐 Change Language"]
     ], resize_keyboard=True)
-                              # --- START HANDLER ---
+         # --- START HANDLER ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if is_banned(user_id):
@@ -238,6 +238,8 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 {E_PIN} <b>Available Admin Commands:</b>
 • <code>/createcoupon [count] [amount]</code> - Generate coupons
+• <code>/deletecoupon [code]</code> - Delete/Close a coupon
+• <code>/coupons</code> - List all active coupons
 • <code>/singleuser [uid] [msg]</code> - Send message to single user
 • <code>/alluser [text/media]</code> - Broadcast text, photo or video to all users
 • <code>/addstockfile [prod_id]</code> - Reply to text file to upload stock
@@ -330,6 +332,30 @@ async def create_coupon(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(msg, parse_mode="HTML")
     except Exception:
         await update.message.reply_text(f"{E_CROS} <b>Usage:</b> <code>/createcoupon [count] [amount]</code>", parse_mode="HTML")
+
+async def delete_coupon(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != ADMIN_ID: return
+    try:
+        args = context.args
+        if not args:
+            await update.message.reply_text(f"{E_CROS} <b>Usage:</b> <code>/deletecoupon [COUPON_CODE]</code>", parse_mode="HTML")
+            return
+        
+        code_to_delete = args[0].strip().upper()
+
+        conn = sqlite3.connect('bot_database.db')
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM coupons WHERE code = ?', (code_to_delete,))
+        deleted_rows = cursor.rowcount
+        conn.commit()
+        conn.close()
+
+        if deleted_rows > 0:
+            await update.message.reply_text(f"{E_TICK} <b>Coupon <code>{code_to_delete}</code> successfully delete/close kar diya gaya hai!</b>", parse_mode="HTML")
+        else:
+            await update.message.reply_text(f"{E_CROS} <b>Aisa koi coupon code database mein nahi mila!</b>", parse_mode="HTML")
+    except Exception as e:
+        await update.message.reply_text(f"{E_CROS} Error: {e}", parse_mode="HTML")
 
 async def list_coupons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_ID: return
@@ -470,7 +496,7 @@ async def stock_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             msg += f"• <b>{v['name']}</b>: <i>Contact Admin Mode</i>\n"
     await update.message.reply_text(msg, parse_mode="HTML")
-                         # --- MENU HANDLER ---
+                       # --- MENU HANDLER ---
 async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     user_id = update.effective_user.id
@@ -731,6 +757,7 @@ def main():
     app.add_handler(CommandHandler("admin", admin_panel))
     app.add_handler(CommandHandler("singleuser", single_user_message))
     app.add_handler(CommandHandler("createcoupon", create_coupon))
+    app.add_handler(CommandHandler("deletecoupon", delete_coupon))
     app.add_handler(CommandHandler("coupons", list_coupons))
     app.add_handler(CommandHandler("id", product_ids))
     app.add_handler(CommandHandler("clear", clear_chat))
@@ -750,4 +777,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-            
+    
