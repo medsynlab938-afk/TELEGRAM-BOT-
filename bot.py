@@ -184,7 +184,7 @@ def main_keyboard():
         ["📜 Orders History", "💬 Live Support"],
         ["🌐 Change Language"]
     ], resize_keyboard=True)
-  # --- START HANDLER ---
+                              # --- START HANDLER ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if is_banned(user_id):
@@ -197,12 +197,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     clear_space = "\n" * 15
 
-    # Force Language Selection first if not selected
     if user_data['lang'] is None:
         await update.message.reply_text(f"{clear_space}{E_GLOB} <b>Select your preferred language:</b>", reply_markup=lang_keyboard(), parse_mode="HTML")
         return
 
-    # Force Join after Language is selected
     if not user_data['verified']:
         await update.message.reply_text(f"{clear_space}{E_BELL} <b>Please join our official channels to continue:</b>", reply_markup=subscription_keyboard(), parse_mode="HTML")
         return
@@ -472,7 +470,7 @@ async def stock_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             msg += f"• <b>{v['name']}</b>: <i>Contact Admin Mode</i>\n"
     await update.message.reply_text(msg, parse_mode="HTML")
-      # --- MENU HANDLER ---
+                         # --- MENU HANDLER ---
 async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     user_id = update.effective_user.id
@@ -665,7 +663,7 @@ async def handle_inline(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data.startswith("lang_"):
         sel = data.split("_")[1]
         user_data['lang'] = sel
-        user_data['verified'] = False  # Reset verification so force join appears after changing language
+        user_data['verified'] = False
         save_user(user_id, user_data)
         await query.message.delete()
         await context.bot.send_message(user_id, f"{E_BELL} <b>Please join our official channels to continue:</b>", reply_markup=subscription_keyboard(), parse_mode="HTML")
@@ -747,9 +745,9 @@ def main():
     app.add_handler(CallbackQueryHandler(handle_inline))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_menu))
 
-    print("🚀 Bot is running successfully with /singleuser command...")
+    print("🚀 Bot is running successfully...")
     app.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
     main()
-                                                             
+            
