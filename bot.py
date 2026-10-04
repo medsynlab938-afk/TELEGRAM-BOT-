@@ -184,7 +184,7 @@ def main_keyboard():
         ["📜 Orders History", "💬 Live Support"],
         ["🌐 Change Language"]
     ], resize_keyboard=True)
-         # --- START HANDLER ---
+    # --- START HANDLER ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if is_banned(user_id):
@@ -478,9 +478,14 @@ async def deduct_bal(update: Update, context: ContextTypes.DEFAULT_TYPE):
         amt = float(context.args[1])
         u_data = get_user(uid)
         if u_data:
-            u_data['balance'] = max(0.0, u_data['balance'] - amt)
+            current_bal = u_data['balance']
+            if amt > current_bal:
+                await update.message.reply_text(f"{E_CROS} <b>User ke paas sirf ₹{current_bal:.2f} balance hai! Aap ₹{amt} deduct nahi kar sakte.</b>", parse_mode="HTML")
+                return
+            
+            u_data['balance'] = max(0.0, current_bal - amt)
             save_user(uid, u_data)
-            await update.message.reply_text(f"{E_TICK} ₹{amt} deducted from User <code>{uid}</code>.", parse_mode="HTML")
+            await update.message.reply_text(f"{E_TICK} ₹{amt} deducted from User <code>{uid}</code>. New Balance: ₹{u_data['balance']:.2f}", parse_mode="HTML")
         else:
             await update.message.reply_text(f"{E_CROS} User not found.", parse_mode="HTML")
     except Exception:
@@ -496,7 +501,7 @@ async def stock_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             msg += f"• <b>{v['name']}</b>: <i>Contact Admin Mode</i>\n"
     await update.message.reply_text(msg, parse_mode="HTML")
-                       # --- MENU HANDLER ---
+# --- MENU HANDLER ---
 async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     user_id = update.effective_user.id
@@ -580,7 +585,7 @@ async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         details = text.strip()
         amount = user_data['withdraw_amount']
         
-        user_data['balance'] -= amount
+        user_data['balance'] = max(0.0, user_data['balance'] - amount)
         user_data['state'] = None
         user_data['withdraw_amount'] = 0.0
         save_user(user_id, user_data)
@@ -744,7 +749,7 @@ async def handle_inline(update: Update, context: ContextTypes.DEFAULT_TYPE):
             conn.commit()
             conn.close()
 
-            user_data['balance'] -= cost
+            user_data['balance'] = max(0.0, user_data['balance'] - cost)
             save_user(user_id, user_data)
             await query.message.reply_text(f"{E_TICK} <b>Purchase Successful!</b> {E_FIRE}\n\n{E_GIFT} <b>Item:</b> {prod['name']}\n{E_PIN} <b>Data:</b> <code>{delivered}</code>\n\n{E_ROCK} Thanks for shopping!\n\n👤 <b>Your ID:</b> <code>{user_id}</code>", parse_mode="HTML")
 
@@ -777,4 +782,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
+        
